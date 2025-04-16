@@ -1,8 +1,9 @@
 import numpy as np
+
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from math import sqrt
-from mpl_toolkits.mplot3d import Axes3D
+# Removed unused import
 plt.style.use('ggplot')
 
 # Enhanced missile specifications
@@ -32,7 +33,58 @@ missile_specs = {
         "radar_range": 150
     }
 }
+# Add Russian 9K720 ISKANDER-M Tactical Missile to the missile specifications
+missile_specs["9K720 ISKANDER-M"] = {
+    "range_km": 500,
+    "max_altitude_km": 50,
+    "speed_mach": 6.0,
+    "warhead_kg": 480,
+    "engagement_time_s": 180,
+    "cost_million": 3.5,
+    "pk": 0.9,
+    "mtbf_hours": 1000,
+    "repair_time_hours": 40,
+    "radar_range": 400
+}
+# Add ATACMS Tactical Missile to the missile specifications
+missile_specs["ATACMS"] = {
+    "range_km": 300,
+    "max_altitude_km": 50,
+    "speed_mach": 3.5,
+    "warhead_kg": 230,
+    "engagement_time_s": 150,
+    "cost_million": 2.5,
+    "pk": 0.8,
+    "mtbf_hours": 800,
+    "repair_time_hours": 35,
+    "radar_range": 350
+}
 
+# Calculate and compare craters of 4 different missiles
+missiles = ["HQ-9", "Patriot PAC-3", "9K720 ISKANDER-M", "ATACMS"]
+crater_radii = {}
+
+
+
+# Show 3D craters for each missile
+fig = plt.figure(figsize=(12, 10))
+ax = fig.add_subplot(111, projection='3d')
+
+u = np.linspace(0, 2 * np.pi, 100)
+v = np.linspace(0, np.pi, 100)
+
+for missile, radius in crater_radii.items():
+    x = radius * np.outer(np.cos(u), np.sin(v))
+    y = radius * np.outer(np.sin(u), np.sin(v))
+    z = -radius * np.outer(np.ones(np.size(u)), np.cos(v))  # Negative z for crater depth
+    ax.plot_surface(x, y, z, alpha=0.6, label=missile)
+
+ax.set_title("3D Impact Craters for Different Missiles")
+ax.set_xlabel("X (m)")
+ax.set_ylabel("Y (m)")
+ax.set_zlabel("Depth (m)")
+plt.legend(crater_radii.keys())
+plt.show()
 class AirDefenseAnalyzer:
     def __init__(self, specs):
         self.specs = specs
@@ -61,7 +113,7 @@ class AirDefenseAnalyzer:
         plt.show()
     
     def lanchester_attrition(self, hq9_count, patriot_count, duration=10):
-        def model(y, t, alpha, beta):
+        def model(y, _, alpha, beta):  # Renamed 't' to '_' to indicate it's unused
             hq9, patriot = y
             dhq9 = -beta * patriot
             dpatriot = -alpha * hq9
@@ -128,7 +180,7 @@ class AirDefenseAnalyzer:
         plt.show()
     
     def radar_coverage(self):
-        def calc_coverage(range_km, alt_km):
+        def calc_coverage(_, alt_km):  # Renamed 'range_km' to '_' to indicate it's unused
             earth_radius = 6371  # Earth's radius in km
             return 2 * np.pi * earth_radius * (sqrt(alt_km**2 + 2 * earth_radius * alt_km) - alt_km)
         
@@ -226,7 +278,7 @@ plt.ylabel("Altitude (km)")
 plt.legend()
 plt.grid(True)
 plt.show()
-def impact_radius(missile_mass, velocity, target_density, target_yield_strength):
+def impact_radius(missile_mass, velocity, _, target_yield_strength):  # Renamed 'target_density' to '_' to indicate it's unused
     """
     Calculate the radius of impact crater using a simplified model.
     """
@@ -245,7 +297,25 @@ target_yield_strength = 1e7  # Pa (yield strength of target material)
     # Calculate radius for lighter material
 lighter_radius = impact_radius(missile_mass, velocity, lighter_target_density, lighter_target_yield_strength)
 print(f"Estimated impact radius for lighter material: {lighter_radius:.2f} meters")
+for missile in missiles:
+    missile_mass = missile_specs[missile]["warhead_kg"]
+    velocity = missile_specs[missile]["speed_mach"] * 343  # Convert Mach to m/s
+    kinetic_energy = 0.5 * missile_mass * velocity**2
+    crater_volume = kinetic_energy / target_yield_strength
+    radius = (3 * crater_volume / (4 * np.pi))**(1/3)
+    crater_radii[missile] = radius
 
+# Display results for each missile
+for missile, radius in crater_radii.items():
+    print(f"Missile: {missile}, Crater Radius: {radius:.2f} meters")
+
+# Plot comparison of crater radii for different missiles
+plt.figure(figsize=(10, 6))
+plt.bar(crater_radii.keys(), crater_radii.values(), color=['blue', 'green', 'red', 'orange'])
+plt.title("Crater Radius for Different Missiles")
+plt.ylabel("Crater Radius (m)")
+plt.grid(True)
+plt.show()
     # Plot 3D diagram of the impact crater for lighter material
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
@@ -361,4 +431,27 @@ plt.ylabel("Crater Radius (m)")
 plt.xticks(rotation=45, ha='right')
 plt.grid(True)
 plt.tight_layout()
+plt.show()
+# Compare craters of 3 different missiles
+missiles = ["HQ-9", "Patriot PAC-3", "9K720 ISKANDER-M"]
+crater_radii = {}
+
+for missile in missiles:
+    missile_mass = missile_specs[missile]["warhead_kg"]
+    velocity = missile_specs[missile]["speed_mach"] * 343  # Convert Mach to m/s
+    kinetic_energy = 0.5 * missile_mass * velocity**2
+    crater_volume = kinetic_energy / target_yield_strength
+    radius = (3 * crater_volume / (4 * np.pi))**(1/3)
+    crater_radii[missile] = radius
+
+# Display results for each missile
+for missile, radius in crater_radii.items():
+    print(f"Missile: {missile}, Crater Radius: {radius:.2f} meters")
+
+# Plot comparison of crater radii for different missiles
+plt.figure(figsize=(10, 6))
+plt.bar(crater_radii.keys(), crater_radii.values(), color=['blue', 'green', 'red'])
+plt.title("Crater Radius for Different Missiles")
+plt.ylabel("Crater Radius (m)")
+plt.grid(True)
 plt.show()
